@@ -21,8 +21,8 @@ Para rodar este projeto, siga os passos abaixo:
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/SEU_USUARIO/backend1.git
-cd backend1
+git clone https://github.com/Two7ffx217/DESAFIOBACK1.git
+cd DESAFIOBACK1
 
 
 ### 2. Instale as dependências
@@ -83,7 +83,7 @@ DELETE /produtos/:id - Deleta um produto.
   README.md       # Documentação do projeto
 
 
-### Licença
+
 
 ### Explicação:
 
