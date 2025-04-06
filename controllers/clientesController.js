@@ -3,6 +3,13 @@ const Clientes = require('../models/clientesModel');
 // Criar um novo cliente
 exports.criarCliente = async (req, res) => {
   try {
+    const { nome, sobrenome, email, idade } = req.body;
+
+    // Validação da idade
+    if (idade < 0 || idade > 99) {
+      return res.status(400).json({ message: 'Idade deve ser entre 0 e 99.' });
+    }
+
     const cliente = await Clientes.create(req.body);
     res.status(201).json(cliente);
   } catch (err) {
@@ -36,6 +43,13 @@ exports.getClienteById = async (req, res) => {
 // Atualizar um cliente
 exports.atualizarCliente = async (req, res) => {
   try {
+    const { idade } = req.body;
+
+    // Validação da idade
+    if (idade < 0 || idade > 99) {
+      return res.status(400).json({ message: 'Idade deve ser entre 0 e 99.' });
+    }
+
     const cliente = await Clientes.update(req.body, {
       where: { id: req.params.id }
     });

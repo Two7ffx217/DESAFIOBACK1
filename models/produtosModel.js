@@ -1,21 +1,54 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../configs/dbConfig'); // Importando a configuração do banco de dados
+const sequelize = require('../configs/dbConfig');
 
-// Definindo o modelo Produto
 const Produto = sequelize.define('Produto', {
   nome: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    validate: {
+      notEmpty: {
+        msg: 'O nome do produto é obrigatório'
+      }
+    }
   },
   preco: {
     type: DataTypes.FLOAT,
-    allowNull: false
+    allowNull: false,
+    validate: {
+      isFloat: {
+        msg: 'O preço deve ser um número válido'
+      },
+      min: {
+        args: [0],
+        msg: 'O preço não pode ser negativo'
+      }
+    },
+    get() {
+      // Garante que o preço sempre retorne como número
+      return parseFloat(this.getDataValue('preco'));
+    }
+  },
+  descricao: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  data_atualizado: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
   }
 }, {
-  timestamps: false, // Se não desejar as colunas createdAt e updatedAt
-  tableName: 'produtos' // Nome da tabela no banco de dados
+  timestamps: false,
+  tableName: 'produtos',
+  hooks: {
+    beforeSave: (produto) => {
+      // Garante que o preço seja salvo como número
+      if (typeof produto.preco === 'string') {
+        produto.preco = parseFloat(produto.preco);
+      }
+      produto.data_atualizado = new Date();
+    }
+  }
 });
 
-// Se necessário, você pode sincronizar o modelo manualmente em uma parte específica do seu código, como na inicialização do servidor ou em migrações
-
-module.exports = Produto; // Exportando o modelo para ser usado em outros arquivos
+module.exports = Produto;

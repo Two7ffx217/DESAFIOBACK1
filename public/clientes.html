@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Clientes</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f7fc;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      width: 80%;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    form input {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+
+    form input:focus {
+      outline: none;
+      border-color: #007bff;
+    }
+
+    form button {
+      padding: 10px;
+      font-size: 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #007bff;
+      color: white;
+      font-weight: bold;
+    }
+
+    td {
+      background-color: #f9f9f9;
+    }
+
+    td button {
+      padding: 5px 10px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    td button.editar {
+      background-color: #2196f3;
+      color: white;
+    }
+
+    td button.editar:hover {
+      background-color: #1976d2;
+    }
+
+    td button.remover {
+      background-color: #f44336;
+      color: white;
+    }
+
+    td button.remover:hover {
+      background-color: #c82333;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .container {
+        width: 95%;
+      }
+
+      table {
+        font-size: 0.9rem;
+      }
+
+      form input,
+      form button {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Clientes</h1>
+
+    <form id="form-cliente">
+      <input type="text" name="nome" placeholder="Nome" required />
+      <input type="text" name="sobrenome" placeholder="Sobrenome" required />
+      <input type="email" name="email" placeholder="Email" required />
+      <input type="number" name="idade" placeholder="Idade" required />
+      <button type="submit">Adicionar Cliente</button>
+    </form>
+
+    <table id="tabela-clientes">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Sobrenome</th>
+          <th>Email</th>
+          <th>Idade</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function carregarClientes() {
+      const res = await fetch('/clientes');
+      const clientes = await res.json();
+      const tbody = document.querySelector('#tabela-clientes tbody');
+      tbody.innerHTML = '';
+
+      clientes.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${c.id}</td>
+          <td>${c.nome}</td>
+          <td>${c.sobrenome}</td>
+          <td>${c.email}</td>
+          <td>${c.idade}</td>
+          <td>
+            <button class="btn editar" onclick="editarCliente(${c.id})">Editar</button>
+            <button class="btn remover" onclick="removerCliente(${c.id})">Remover</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('form-cliente').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const form = e.target;
+      const idade = parseInt(form.idade.value);
+
+      // Verificando se a idade é maior que 99
+      if (idade > 99) {
+        alert('A idade não pode ser maior que 99');
+        return;
+      }
+
+      const dados = {
+        nome: form.nome.value,
+        sobrenome: form.sobrenome.value,
+        email: form.email.value,
+        idade: idade
+      };
+
+      await fetch('/clientes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      });
+
+      form.reset();
+      carregarClientes();
+    });
+
+    async function removerCliente(id) {
+      if (confirm('Tem certeza que deseja remover este cliente?')) {
+        await fetch(`/clientes/${id}`, { method: 'DELETE' });
+        carregarClientes();
+      }
+    }
+
+    async function editarCliente(id) {
+      const nome = prompt('Novo nome:');
+      const sobrenome = prompt('Novo sobrenome:');
+      const email = prompt('Novo email:');
+      const idade = prompt('Nova idade:');
+
+      if (nome && sobrenome && email && idade) {
+        if (parseInt(idade) > 99) {
+          alert('A idade não pode ser maior que 99');
+          return;
+        }
+
+        await fetch(`/clientes/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, sobrenome, email, idade: parseInt(idade) })
+        });
+        carregarClientes();
+      }
+    }
+
+    carregarClientes();
+  </script>
+</body>
+</html>

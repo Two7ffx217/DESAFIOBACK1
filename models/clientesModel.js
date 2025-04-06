@@ -23,14 +23,22 @@ const Cliente = sequelize.define('Cliente', {
     type: DataTypes.INTEGER,
     allowNull: false,
     validate: {
-      min: 0 // Garantir que a idade seja um número inteiro positivo
+      min: 0, // Garantir que a idade seja um número inteiro positivo
+      max: 99, // Garantir que a idade não seja maior que 99
+      isInt: {
+        args: true,
+        msg: 'A idade deve ser um número inteiro.' // Mensagem customizada
+      },
+      idadeValida(value) {
+        if (value < 0 || value > 99) {
+          throw new Error('Idade deve ser entre 0 e 99.');
+        }
+      }
     }
   }
 }, {
   timestamps: false, // Se não desejar as colunas createdAt e updatedAt
   tableName: 'clientes' // Nome da tabela no banco de dados
 });
-
-// Se necessário, você pode sincronizar o modelo manualmente em uma parte específica do seu código, como na inicialização do servidor ou em migrações
 
 module.exports = Cliente; // Exportando o modelo para ser usado em outros arquivos

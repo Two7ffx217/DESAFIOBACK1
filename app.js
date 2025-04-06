@@ -14,10 +14,15 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(express.json()); // já está incluso no seu app.js
+app.use(express.static('public'));
+
 
 // Rotas
 app.use('/clientes', clientesRoutes);
 app.use('/produtos', produtosRoutes);
+app.use(express.static('public'));
+
 
 // Endpoint padrão
 app.get('/', (req, res) => {

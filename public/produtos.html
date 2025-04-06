@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestão de Produtos</title>
+</head>
+<body>
+  <div class="container">
+    <h1>Produtos</h1>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f7fc;
+        margin: 0;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+      }
+
+      .container {
+        width: 80%;
+        margin: 0 auto;
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+
+      form input, form textarea {
+        padding: 12px;
+        font-size: 1rem;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        transition: all 0.3s ease;
+      }
+
+      form input:focus, form textarea:focus {
+        outline: none;
+        border-color: #007bff;
+      }
+
+      form button {
+        padding: 12px;
+        font-size: 1.1rem;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      form button:hover {
+        background-color: #0056b3;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      th, td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background-color: #007bff;
+        color: white;
+        font-weight: bold;
+      }
+
+      td {
+        background-color: #f9f9f9;
+      }
+
+      td button {
+        padding: 8px 12px;
+        margin: 0 5px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: white;
+      }
+
+      td button.editar {
+        background-color: #2196f3;
+      }
+
+      td button.editar:hover {
+        background-color: #0b7dda;
+      }
+
+      td button.remover {
+        background-color: #f44336;
+      }
+
+      td button.remover:hover {
+        background-color: #d32f2f;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          width: 95%;
+        }
+
+        table {
+          font-size: 0.9rem;
+        }
+
+        form input, form button, form textarea {
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+
+    <form id="form-produto">
+      <input type="text" name="nome" placeholder="Nome do Produto" required>
+      <textarea name="descricao" placeholder="Descrição do Produto"></textarea>
+      <input type="number" name="preco" placeholder="Preço" step="0.01" min="0" required>
+      <button type="submit">Adicionar Produto</button>
+    </form>
+
+    <table id="tabela-produtos">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th>Preço</th>
+          <th>Última Atualização</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/produtos';
+
+    function formatarData(dataString) {
+      if (!dataString) return '-';
+      const options = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return new Date(dataString).toLocaleString('pt-BR', options);
+    }
+
+    function formatarPreco(valor) {
+      const num = Number(valor);
+      return isNaN(num) ? '0.00' : num.toFixed(2);
+    }
+
+    async function carregarProdutos() {
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Erro ao carregar produtos');
+
+        const data = await response.json();
+
+        if (!data || !Array.isArray(data.data)) {
+          throw new Error('Dados de produtos não encontrados ou formato inválido');
+        }
+
+        const produtos = data.data;
+        const tbody = document.querySelector('#tabela-produtos tbody');
+        tbody.innerHTML = '';
+
+        produtos.forEach(produto => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${produto.id}</td>
+            <td>${produto.nome}</td>
+            <td>${produto.descricao || '-'}</td>
+            <td>R$ ${formatarPreco(produto.preco)}</td>
+            <td>${formatarData(produto.data_atualizado)}</td>
+            <td>
+              <button class="editar" onclick="editarProduto(${produto.id})">Editar</button>
+              <button class="remover" onclick="removerProduto(${produto.id})">Remover</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao carregar produtos: ' + error.message);
+      }
+    }
+
+    async function removerProduto(id) {
+      if (!confirm('Tem certeza que deseja remover este produto?')) return;
+
+      try {
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Erro ao remover produto');
+        alert('Produto removido com sucesso');
+        carregarProdutos();
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao remover produto: ' + error.message);
+      }
+    }
+
+    async function editarProduto(id) {
+      const novoNome = prompt('Novo nome do produto:');
+      const novaDescricao = prompt('Nova descrição:');
+      const novoPreco = prompt('Novo preço:');
+
+      if (!novoNome || !novoPreco) return alert('Nome e preço são obrigatórios.');
+
+      try {
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            nome: novoNome,
+            descricao: novaDescricao,
+            preco: parseFloat(novoPreco)
+          })
+        });
+
+        if (!response.ok) throw new Error('Erro ao atualizar produto');
+        alert('Produto atualizado com sucesso');
+        carregarProdutos();
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao atualizar produto: ' + error.message);
+      }
+    }
+
+    document.getElementById('form-produto').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const form = e.target;
+      const nome = form.nome.value.trim();
+      const descricao = form.descricao.value.trim();
+      const preco = parseFloat(form.preco.value);
+
+      if (!nome || isNaN(preco)) return alert('Nome e preço são obrigatórios.');
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nome, descricao, preco })
+        });
+
+        if (!response.ok) throw new Error('Erro ao adicionar produto');
+        form.reset();
+        alert('Produto adicionado com sucesso');
+        carregarProdutos();
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao adicionar produto: ' + error.message);
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', carregarProdutos);
+  </script>
+</body>
+</html>
